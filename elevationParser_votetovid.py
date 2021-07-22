@@ -74,7 +74,7 @@ def toJSON(inputFile, outputFile):
     localString = ''
     for line in iFile:
         localString = line.split()
-        
+
         print(localString)
 
 def main(minLon_, minLat_, maxLon_, maxLat_, step):
@@ -103,7 +103,7 @@ def main(minLon_, minLat_, maxLon_, maxLat_, step):
 if __name__ == '__main__':
 
     # fillUnknownHeight('Novosibirsk_oktyabrskiy_001.txt')
-    toJSON('Novosibirsk_oktyabrskiy_001.txt')
+    toJSON('Novosibirsk_oktyabrskiy_001.txt', 'heightAboveSee.json')
     # main(minLon, minLat, maxLon, maxLat, step)
 
 
