@@ -10,6 +10,7 @@ from selenium.webdriver.common.keys import Keys
 import time
 from bs4 import BeautifulSoup
 import random
+import json
 
 # Start URL format
 # 'center' value could not be changed in future, only 'point'
@@ -31,14 +32,50 @@ maxLat = borders[3]
 
 step = 0.0001 # around 60 meters
 
-def writeIntoFileArray(filename, lon, lat, data):
-    f = open(filename, 'a')
+def writeIntoFileArray(fileName, lon, lat, data):
+    f = open(fileName, 'a')
     for i in range(len(data)):
         f.write(str(lon) + ' ' + str(lat) + ' ' + str(data) + '\n')
 
-def writeIntoFile(filename, lon, lat, data):
-    f = open(filename, 'a')
+def writeIntoFile(fileName, lon, lat, data):
+    f = open(fileName, 'a')
     f.write(str(lon) + ' ' + str(lat) + ' ' + str(data) + '\n')
+
+def parceOnePoint(Lon_, Lat_):
+    driver = webdriver.Chrome(ChromeDriverManager(version="91.0.4472.19").install())
+    url = 'https://votetovid.ru/#' + str(center[0]) + comma + str(center[1]) + comma + zoom + comma \
+          + str(Lon_) + comma + str(Lat_) + i + comma + trb
+    driver.get(url)
+    html_ = driver.page_source
+    # for this part of the code you will need to install lxml module: pip install lxml
+    soup = BeautifulSoup(html_, 'lxml')
+    span_txHgt = soup.find_all('span')[0]
+    height = span_txHgt.text
+    return height
+
+# TODO:
+# Fill the '?' symbol with the actual height
+def fillUnknownHeight(fileName):
+    file = open(fileName, 'r')
+    localString = ''
+
+    driver = webdriver.Chrome(ChromeDriverManager(version="91.0.4472.19").install())
+
+    for line in file:
+        localString = line.split()
+        if(localString[2] == '?'):
+            url = 'https://votetovid.ru/#' + str(center[0]) + comma + str(center[1]) + comma + zoom + comma \
+                  + localString[0] + comma + localString[1] + i + comma + trb
+    return 0
+
+def toJSON(inputFile, outputFile):
+    iFile = open(inputFile, 'r')
+    oFile = open(outputFile, 'a')
+    localString = ''
+    for line in iFile:
+        localString = line.split()
+        
+        print(localString)
 
 def main(minLon_, minLat_, maxLon_, maxLat_, step):
     driver = webdriver.Chrome(ChromeDriverManager(version="91.0.4472.19").install())
@@ -63,8 +100,10 @@ def main(minLon_, minLat_, maxLon_, maxLat_, step):
             print(pointer[0], pointer[1], height)
             writeIntoFile('Novosibirsk_oktyabrskiy_0001.txt', pointer[0], pointer[1], height)
 
-
 if __name__ == '__main__':
-    main(minLon, minLat, maxLon, maxLat, step)
+
+    # fillUnknownHeight('Novosibirsk_oktyabrskiy_001.txt')
+    toJSON('Novosibirsk_oktyabrskiy_001.txt')
+    # main(minLon, minLat, maxLon, maxLat, step)
 
 
