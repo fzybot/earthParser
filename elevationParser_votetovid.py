@@ -82,12 +82,18 @@ def calculateDistance(lon1, lat1, lon2, lat2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-def findNearest():
+def interpolateHeights(lon_, lat_, localArrayHeights_):
+    localSumm = 0
+    counter = 1
+    for i in range(len(localArrayHeights_)):
+        distance = calculateDistance(lon_, lat_, localArrayHeights_[i][0], localArrayHeights_[i][1])
+        if distance <= 300:
+            localSumm += localArrayHeights_[i][2]
+            counter += 1
+    return localSumm/counter
 
-    return 0
-
-def interpolateUnknownHeights():
-    fileStoreys = open("Novosibirsk_storeys.txt", 'r')
+def addHeightsToStoreys():
+    fileStoreys = open("Novosibirsk_storeys_V2.txt", 'r')
     fileHeights = open("Novosibirsk_oktyabrskiy_001.txt", 'r')
     fileCombined = open("Novosibirsk_storeys_heights.txt", 'a')
     localStringStoreys = ''
@@ -95,29 +101,34 @@ def interpolateUnknownHeights():
 
     localArrayStoreys = []
     localArrayHeights = []
+    localArrayCombined = []
+    # Parse the files in order to make one file with the same values
     for line in fileStoreys:
         localStringStoreys = line.split()
         localArrayStoreys.append( [float(localStringStoreys[0]), float(localStringStoreys[1]),
-                                   int(localStringStoreys[2])])
+                                   int(localStringStoreys[2]), int(localStringStoreys[3])])
         for lineHeights in fileHeights:
             localStringHeights = lineHeights.split()
             if(localStringHeights[2] != '?'):
-                localArrayHeights.append( [float(localStringHeights[0]), float(localStringHeights[1]), int(localStringHeights[2])] )
-    print(localArrayStoreys)
-    print(localArrayHeights)
+                localArrayHeights.append( [float(localStringHeights[0]), float(localStringHeights[1]), float(localStringHeights[2])] )
+    pdHeights = pd.DataFrame(localArrayHeights)
+    pdStoreys = pd.DataFrame(localArrayStoreys)
+    print(pdHeights)
+
+    for i in range(len(localArrayStoreys)):
+        interpolValue = interpolateHeights(localArrayStoreys[i][0], localArrayStoreys[i][1], localArrayHeights)
+        localArrayCombined.append( [localArrayStoreys[i][0], localArrayStoreys[i][1], localArrayStoreys[i][2],
+                                  localArrayStoreys[i][3], interpolValue] )
+        fileCombined.write(str(localArrayStoreys[i][0]) + ' ' + str(localArrayStoreys[i][1]) + ' ' +
+                           str(localArrayStoreys[i][2]) + ' ' + str(localArrayStoreys[i][3]) + ' ' +
+                           str(interpolValue) + '\n')
+    pdCombined = pd.DataFrame(localArrayCombined)
+    print(pdCombined)
 
     fileStoreys.close()
     fileHeights.close()
     fileCombined.close()
     return 0
-
-def toJSON(inputFile, outputFile):
-    iFile = open(inputFile, 'r')
-    oFile = open(outputFile, 'a')
-    localString = ''
-    for line in iFile:
-        localString = line.split()
-
 
 def main(minLon_, minLat_, maxLon_, maxLat_, step):
     driver = webdriver.Chrome(ChromeDriverManager(version="91.0.4472.19").install())
@@ -143,7 +154,7 @@ def main(minLon_, minLat_, maxLon_, maxLat_, step):
             writeIntoFile('Novosibirsk_oktyabrskiy_0001.txt', pointer[0], pointer[1], height)
 
 if __name__ == '__main__':
-    interpolateUnknownHeights()
+    addHeightsToStoreys()
     # fillUnknownHeight('Novosibirsk_oktyabrskiy_001.txt')
     # toJSON('Novosibirsk_oktyabrskiy_001.txt', 'heightAboveSee.json')
     # main(minLon, minLat, maxLon, maxLat, step)
