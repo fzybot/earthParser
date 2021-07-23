@@ -7,8 +7,11 @@ url: https://github.com/fzybot
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
-import time
 from bs4 import BeautifulSoup
+import pandas as pd
+
+import time
+import math
 import random
 import json
 
@@ -55,7 +58,7 @@ def parceOnePoint(Lon_, Lat_):
 
 # TODO:
 # Fill the '?' symbol with the actual height
-def fillUnknownHeight(fileName):
+def fillUnknownHeights(fileName):
     file = open(fileName, 'r')
     localString = ''
 
@@ -68,6 +71,46 @@ def fillUnknownHeight(fileName):
                   + localString[0] + comma + localString[1] + i + comma + trb
     return 0
 
+# Method calculating distance between two geographical points in [meters]
+# Works fine. Tested by 2GIS.ru
+def calculateDistance(lon1, lat1, lon2, lat2):
+    R = 6371210
+    dLon = math.radians(lon2 - lon1)
+    dLat = math.radians(lat2 - lat1)
+    a = math.sin(dLon / 2) * math.sin(dLon / 2) + math.cos(math.radians(lon1)) * math.cos(
+        math.radians(lon2)) * math.sin(dLat / 2) * math.sin(dLat / 2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+def findNearest():
+
+    return 0
+
+def interpolateUnknownHeights():
+    fileStoreys = open("Novosibirsk_storeys.txt", 'r')
+    fileHeights = open("Novosibirsk_oktyabrskiy_001.txt", 'r')
+    fileCombined = open("Novosibirsk_storeys_heights.txt", 'a')
+    localStringStoreys = ''
+    localStringHeights = ''
+
+    localArrayStoreys = []
+    localArrayHeights = []
+    for line in fileStoreys:
+        localStringStoreys = line.split()
+        localArrayStoreys.append( [float(localStringStoreys[0]), float(localStringStoreys[1]),
+                                   int(localStringStoreys[2])])
+        for lineHeights in fileHeights:
+            localStringHeights = lineHeights.split()
+            if(localStringHeights[2] != '?'):
+                localArrayHeights.append( [float(localStringHeights[0]), float(localStringHeights[1]), int(localStringHeights[2])] )
+    print(localArrayStoreys)
+    print(localArrayHeights)
+
+    fileStoreys.close()
+    fileHeights.close()
+    fileCombined.close()
+    return 0
+
 def toJSON(inputFile, outputFile):
     iFile = open(inputFile, 'r')
     oFile = open(outputFile, 'a')
@@ -75,7 +118,6 @@ def toJSON(inputFile, outputFile):
     for line in iFile:
         localString = line.split()
 
-        print(localString)
 
 def main(minLon_, minLat_, maxLon_, maxLat_, step):
     driver = webdriver.Chrome(ChromeDriverManager(version="91.0.4472.19").install())
@@ -101,9 +143,9 @@ def main(minLon_, minLat_, maxLon_, maxLat_, step):
             writeIntoFile('Novosibirsk_oktyabrskiy_0001.txt', pointer[0], pointer[1], height)
 
 if __name__ == '__main__':
-
+    interpolateUnknownHeights()
     # fillUnknownHeight('Novosibirsk_oktyabrskiy_001.txt')
-    toJSON('Novosibirsk_oktyabrskiy_001.txt', 'heightAboveSee.json')
+    # toJSON('Novosibirsk_oktyabrskiy_001.txt', 'heightAboveSee.json')
     # main(minLon, minLat, maxLon, maxLat, step)
 
 
